@@ -51,22 +51,49 @@ def go(config: DictConfig):
             )
 
         if "basic_cleaning" in active_steps:
-            ##################
-            # Implement here #
-            ##################
-            pass
+            _ = mlflow.run(
+                os.path.join(hydra.utils.get_original_cwd(), "src", "basic_cleaning"),
+                "main",
+                parameters={
+                    "input_artifact": config["basic_cleaning"]["input_artifact"],
+                    "output_artifact": config["basic_cleaning"]["output_artifact"],
+                    "output_type": config["basic_cleaning"]["output_type"],
+                    "output_description": config["basic_cleaning"]["output_description"],
+                    "min_price": config["basic_cleaning"]["min_price"],
+                    "max_price": config["basic_cleaning"]["max_price"],
+                },
+                env_manager="conda"
+            )
+
 
         if "data_check" in active_steps:
-            ##################
-            # Implement here #
-            ##################
-            pass
+            _ = mlflow.run(
+                os.path.join(hydra.utils.get_original_cwd(), "src", "data_check"),
+                "main",
+                parameters={
+                    "csv": "clean_sample:latest",
+                    "ref": "clean_sample:reference",
+                    "kl_threshold": config["data_check"]["kl_threshold"],
+                    "min_price": config["etl"]["min_price"],
+                    "max_price": config["etl"]["max_price"],
+                },
+                env_manager="conda"
+            )
+            
 
         if "data_split" in active_steps:
-            ##################
-            # Implement here #
-            ##################
-            pass
+            _ = mlflow.run(
+                f"{config['main']['components_repository']}/train_val_test_split",
+                "main",
+                version="main",
+                env_manager="conda",
+                parameters={
+                    "input": "clean_sample:latest",
+                    "test_size": str(config["modeling"]["test_size"]),
+                    "random_seed": str(config["modeling"]["random_seed"]),
+                    "stratify_by": config["modeling"]["stratify_by"],
+                },
+            )
 
         if "train_random_forest" in active_steps:
 
@@ -77,12 +104,23 @@ def go(config: DictConfig):
 
             # NOTE: use the rf_config we just created as the rf_config parameter for the train_random_forest
             # step
+            train_rf_path = os.path.join(hydra.utils.get_original_cwd(), "src", "train_random_forest")
 
-            ##################
-            # Implement here #
-            ##################
-
-            pass
+            # Run MLflow project step for training RF
+            _ = mlflow.run(
+                train_rf_path,
+                entry_point="main",
+                env_manager="conda",
+                parameters={
+                    "trainval_artifact": "trainval_data.csv:latest",
+                    "val_size": str(config["modeling"]["val_size"]),
+                    "random_seed": str(config["modeling"]["random_seed"]),
+                    "stratify_by": config["modeling"]["stratify_by"],
+                    "max_tfidf_features": config["modeling"]["max_tfidf_features"],
+                    "rf_config": rf_config,
+                    "output_artifact": "random_forest_export",
+                },
+            )
 
         if "test_regression_model" in active_steps:
 
