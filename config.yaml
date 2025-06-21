@@ -28,11 +28,15 @@ modeling:
   random_forest:
     n_estimators: 100
     max_depth: 15
-    min_samples_split: 4
-    min_samples_leaf: 3
+    min_samples_split: 3
+    min_samples_leaf: 4
     # Here -1 means all available cores
     n_jobs: -1
     criterion: squared_error
     max_features: 0.5
+    random_state: 42
+    random_seed: 42
+    val_size: 0.2
+    stratify_by "neighbourhood_group"		
     # DO not change the following
     oob_score: true
