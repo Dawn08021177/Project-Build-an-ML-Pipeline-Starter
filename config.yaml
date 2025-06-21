@@ -42,8 +42,6 @@ modeling:
     criterion: squared_error
     max_features: 0.5
     random_state: 42
-    random_seed: 42
-    val_size: 0.2
-    stratify_by: "neighbourhood_group"    
+    
     # DO not change the following
     oob_score: true
